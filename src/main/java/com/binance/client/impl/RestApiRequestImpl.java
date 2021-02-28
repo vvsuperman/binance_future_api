@@ -377,6 +377,36 @@ class RestApiRequestImpl {
         return request;
     }
 
+    RestApiRequest<List<MarkPrice>> getAllMarkPrice(String symbol) {
+        RestApiRequest<List<MarkPrice>> request = new RestApiRequest<>();
+        UrlParamsBuilder builder = UrlParamsBuilder.build()
+                .putToUrl("symbol", symbol);
+        request.request = createRequestByGet("/fapi/v1/premiumIndex", builder);
+
+        request.jsonParser = (jsonWrapper -> {
+            List<MarkPrice> result = new LinkedList<>();
+            JsonWrapperArray dataArray = new JsonWrapperArray(new JSONArray());
+            if (jsonWrapper.containKey("data")) {
+                dataArray = jsonWrapper.getJsonArray("data");
+            } else {
+                dataArray.add(jsonWrapper.convert2JsonObject());
+            }
+            dataArray.forEach((item) -> {
+                MarkPrice element = new MarkPrice();
+                element.setSymbol(item.getString("symbol"));
+                element.setMarkPrice(item.getBigDecimal("markPrice"));
+                element.setLastFundingRate(item.getBigDecimal("lastFundingRate"));
+                element.setNextFundingTime(item.getLong("nextFundingTime"));
+                element.setTime(item.getLong("time"));
+                result.add(element);
+            });
+
+            return result;
+
+        });
+        return request;
+    }
+
     RestApiRequest<List<MarkPrice>> getMarkPrice(String symbol) {
         RestApiRequest<List<MarkPrice>> request = new RestApiRequest<>();
         UrlParamsBuilder builder = UrlParamsBuilder.build()
